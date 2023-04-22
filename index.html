@@ -19,6 +19,7 @@
       const canvas = document.getElementById('canvas');
       const ctx = canvas.getContext('2d');
       const emotion = document.getElementById('emotion');
+      tf.setBackend('cpu');
       Promise.all([
         faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
         faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
