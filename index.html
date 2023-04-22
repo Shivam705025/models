@@ -1,58 +1,19 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Text to Image Converter</title>
-	<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@4.4.0/dist/tf-core.min.js"></script>
-	<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/deeplab@0.2.1/dist/deeplab.min.js"></script>
-	<style>
-		#input {
-			margin-bottom: 10px;
-			width: 100%;
-			height: 50px;
-			font-size: 20px;
-			padding: 10px;
-		}
-		#output {
-			width: 100%;
-		}
-	</style>
+  <meta charset="UTF-8">
+  <title>Sentence to Image Conversion</title>
 </head>
 <body>
-	<input type="text" id="input" placeholder="Enter text here...">
-	<button onclick="convert()">Convert</button>
-	<div id="output"></div>
-
-	<script>
-		async function convert() {
-			const text = document.getElementById("input").value;
-			const image = await generateImage(text);
-			const output = document.getElementById("output");
-			output.innerHTML = "";
-			output.appendChild(image);
-		}
-
-		async function generateImage(text) {
-			// Load the DeepLab model
-			const model = await deeplab.load();
-
-			// Generate the image
-			const input = tf.tensor2d([text], [1, 1]);
-			const output = model.segment(input);
-			const data = await output.data();
-			const imageData = new ImageData(new Uint8ClampedArray(data), 1, 1);
-
-			// Create a canvas and draw the image on it
-			const canvas = document.createElement("canvas");
-			canvas.width = imageData.width;
-			canvas.height = imageData.height;
-			const ctx = canvas.getContext("2d");
-			ctx.putImageData(imageData, 0, 0);
-
-			// Create an image element from the canvas and return it
-			const image = new Image();
-			image.src = canvas.toDataURL();
-			return image;
-		}
-	</script>
+  <h1>Sentence to Image Conversion</h1>
+  <p>Enter a sentence:</p>
+  <input type="text" id="inputSentence">
+  <button onclick="analyzeSentence()">Analyze</button>
+  <br>
+  <img id="outputImage" style="display:none">
+  <p id="outputCaption"></p>
+  <script src="https://sdk.clarifai.com/js/clarifai-latest.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+  <script src="./app.js"></script>
 </body>
 </html>
