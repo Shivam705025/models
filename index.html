@@ -2,103 +2,61 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Funny Character</title>
-    <style>
-      #canvas {
-        border: 1px solid black;
-      }
-    </style>
+    <title>Text to Logical Animation</title>
+    <script src="https://unpkg.com/textalive-app-api"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
   </head>
   <body>
     <div>
-      <label for="input-text">Enter your text:</label>
-      <input type="text" id="input-text" />
-      <button id="submit-btn">Submit</button>
+      <textarea id="text-input" rows="10" cols="50"></textarea>
     </div>
-    <canvas id="canvas" width="500" height="500"></canvas>
+    <button id="generate-animation-btn">Generate Animation</button>
+    <div id="animation-container"></div>
+    
     <script>
-      // Get canvas and context
-      const canvas = document.getElementById('canvas');
-      const ctx = canvas.getContext('2d');
-
-      // Define character
-      const character = {
-        x: 100,
-        y: 100,
-        speed: 5,
-        direction: 'right',
-        color: 'blue',
-        size: 50,
-      };
-
-      // Define function to draw character
-      function drawCharacter() {
-        ctx.fillStyle = character.color;
-        ctx.fillRect(character.x, character.y, character.size, character.size);
-      }
-
-      // Define function to handle user input
-      function handleInput() {
-        const inputText = document.getElementById('input-text').value;
-        switch (inputText) {
-          case 'up':
-            character.direction = 'up';
-            break;
-          case 'down':
-            character.direction = 'down';
-            break;
-          case 'left':
-            character.direction = 'left';
-            break;
-          case 'right':
-            character.direction = 'right';
-            break;
-          default:
-            break;
-        }
-      }
-
-      // Define function to update character position
-      function updateCharacter() {
-        switch (character.direction) {
-          case 'up':
-            character.y -= character.speed;
-            break;
-          case 'down':
-            character.y += character.speed;
-            break;
-          case 'left':
-            character.x -= character.speed;
-            break;
-          case 'right':
-            character.x += character.speed;
-            break;
-          default:
-            break;
-        }
-      }
-
-      // Define function to clear canvas
-      function clearCanvas() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-      }
-
-      // Define main game loop
-      function gameLoop() {
-        clearCanvas();
-        drawCharacter();
-        updateCharacter();
-        requestAnimationFrame(gameLoop);
-      }
-
-      // Set up event listener for button click
-      const submitBtn = document.getElementById('submit-btn');
-      submitBtn.addEventListener('click', function() {
-        handleInput();
+      // Set up TextAlive API
+      const app = new TextAliveApp();
+      app.options.player = new TextAlivePlayer(document.querySelector("#animation-container"));
+      
+      // Set up anime.js
+      const animation = anime.timeline({
+        autoplay: false,
+        easing: "easeOutExpo",
+        duration: 500,
       });
-
-      // Start game loop
-      gameLoop();
+      
+      // Set up event listeners
+      document.querySelector("#generate-animation-btn").addEventListener("click", function() {
+        const text = document.querySelector("#text-input").value;
+        const words = text.split(" ");
+        
+        // Set up animation sequence
+        animation.add({
+          targets: ".animation-word",
+          opacity: 1,
+          translateY: [50, 0],
+          delay: anime.stagger(100),
+        });
+        animation.add({
+          targets: ".animation-word",
+          opacity: 0,
+          translateY: [0, -50],
+          delay: anime.stagger(100),
+        }, "+=5000");
+        
+        // Set up TextAlive lyrics
+        const songUrl = "https://www.youtube.com/watch?v=HL1UzIK-flA"; // Replace with desired song URL
+        app.songUrl = songUrl;
+        app.request("measures").then(function(measures) {
+          const duration = measures.duration;
+          const lyric = new TextAliveLyric(words);
+          lyric.duration = duration;
+          app.setLyric(lyric);
+          
+          // Start animation
+          animation.play();
+        });
+      });
     </script>
   </body>
 </html>
