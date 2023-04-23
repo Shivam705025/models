@@ -1,68 +1,104 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <title>Text to Music</title>
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-</head>
-<body>
-  <div>
-    <textarea id="text-input" rows="10" cols="50"></textarea>
-  </div>
-  <button id="generate-music-btn">Generate Music</button>
-  <div id="audio-player"></div>
+  <head>
+    <meta charset="UTF-8">
+    <title>Funny Character</title>
+    <style>
+      #canvas {
+        border: 1px solid black;
+      }
+    </style>
+  </head>
+  <body>
+    <div>
+      <label for="input-text">Enter your text:</label>
+      <input type="text" id="input-text" />
+      <button id="submit-btn">Submit</button>
+    </div>
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <script>
+      // Get canvas and context
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
 
-  <script>
-    $(document).ready(function() {
-      $('#generate-music-btn').click(function() {
-        const consumerKey = 'N2l5GVPRoI1zoKkh6dkGsE3uZ419Mn56';
-        const consumerSecret = 'K2d1AAdXoiB4EqAd';
-        const text = $('#text-input').val();
+      // Define character
+      const character = {
+        x: 100,
+        y: 100,
+        speed: 5,
+        direction: 'right',
+        color: 'blue',
+        size: 50,
+      };
 
-        // Get access token
-        $.ajax({
-          url: 'https://api.shutterstock.com/v2/auth/access_token',
-          headers: {
-            Authorization: `Basic ${btoa(`${consumerKey}:${consumerSecret}`)}`,
-          },
-          method: 'POST',
-          data: {
-            grant_type: 'client_credentials',
-          },
-          success: function(response) {
-            const accessToken = response.access_token;
+      // Define function to draw character
+      function drawCharacter() {
+        ctx.fillStyle = character.color;
+        ctx.fillRect(character.x, character.y, character.size, character.size);
+      }
 
-            // Make request to Shutterstock API
-            $.ajax({
-              url: `https://api.shutterstock.com/v2/audio/generate?text=${encodeURIComponent(text)}`,
-              headers: {
-                Authorization: `Bearer ${accessToken}`,
-              },
-              method: 'POST',
-              data: {
-                genre: 'rock',
-                tempo: 'medium',
-                mood: 'happy',
-              },
-              success: function(data) {
-                // Get audio URL from response
-                const audioUrl = data.data.attributes.url;
+      // Define function to handle user input
+      function handleInput() {
+        const inputText = document.getElementById('input-text').value;
+        switch (inputText) {
+          case 'up':
+            character.direction = 'up';
+            break;
+          case 'down':
+            character.direction = 'down';
+            break;
+          case 'left':
+            character.direction = 'left';
+            break;
+          case 'right':
+            character.direction = 'right';
+            break;
+          default:
+            break;
+        }
+      }
 
-                // Create audio player with URL
-                const audioPlayer = `<audio controls><source src="${audioUrl}" type="audio/mpeg"></audio>`;
-                $('#audio-player').html(audioPlayer);
-              },
-              error: function(error) {
-                console.log(error);
-              },
-            });
-          },
-          error: function(error) {
-            console.log(error);
-          },
-        });
+      // Define function to update character position
+      function updateCharacter() {
+        switch (character.direction) {
+          case 'up':
+            character.y -= character.speed;
+            break;
+          case 'down':
+            character.y += character.speed;
+            break;
+          case 'left':
+            character.x -= character.speed;
+            break;
+          case 'right':
+            character.x += character.speed;
+            break;
+          default:
+            break;
+        }
+      }
+
+      // Define function to clear canvas
+      function clearCanvas() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+
+      // Define main game loop
+      function gameLoop() {
+        clearCanvas();
+        drawCharacter();
+        updateCharacter();
+        requestAnimationFrame(gameLoop);
+      }
+
+      // Set up event listener for button click
+      const submitBtn = document.getElementById('submit-btn');
+      submitBtn.addEventListener('click', function() {
+        handleInput();
       });
-    });
-  </script>
-</body>
+
+      // Start game loop
+      gameLoop();
+    </script>
+  </body>
 </html>
