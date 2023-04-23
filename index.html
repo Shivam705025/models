@@ -3,8 +3,6 @@
   <head>
     <meta charset="UTF-8">
     <title>Text to Logical Animation</title>
-    <script src="https://unpkg.com/textalive-app-api"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
   </head>
   <body>
     <div>
@@ -14,49 +12,77 @@
     <div id="animation-container"></div>
     
     <script>
+      // Load TextAlive API script
+      (function(d, s, id) {
+        var js, tjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "https://unpkg.com/textalive-app-api";
+        tjs.parentNode.insertBefore(js, tjs);
+      }(document, "script", "textalive-api"));
+      
+      // Load anime.js script
+      (function(d, s, id) {
+        var js, tjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js";
+        tjs.parentNode.insertBefore(js, tjs);
+      }(document, "script", "animejs"));
+      
       // Set up TextAlive API
-      const app = new TextAliveApp();
-      app.options.player = new TextAlivePlayer(document.querySelector("#animation-container"));
-      
-      // Set up anime.js
-      const animation = anime.timeline({
-        autoplay: false,
-        easing: "easeOutExpo",
-        duration: 500,
-      });
-      
-      // Set up event listeners
-      document.querySelector("#generate-animation-btn").addEventListener("click", function() {
-        const text = document.querySelector("#text-input").value;
-        const words = text.split(" ");
+      function onTextAliveApiLoad() {
+        const app = new TextAliveApp();
+        app.options.player = new TextAlivePlayer(document.querySelector("#animation-container"));
         
-        // Set up animation sequence
-        animation.add({
-          targets: ".animation-word",
-          opacity: 1,
-          translateY: [50, 0],
-          delay: anime.stagger(100),
+        // Set up anime.js
+        const animation = anime.timeline({
+          autoplay: false,
+          easing: "easeOutExpo",
+          duration: 500,
         });
-        animation.add({
-          targets: ".animation-word",
-          opacity: 0,
-          translateY: [0, -50],
-          delay: anime.stagger(100),
-        }, "+=5000");
         
-        // Set up TextAlive lyrics
-        const songUrl = "https://www.youtube.com/watch?v=Zzu15ZezipE"; // Replace with desired song URL
-        app.songUrl = songUrl;
-        app.request("measures").then(function(measures) {
-          const duration = measures.duration;
-          const lyric = new TextAliveLyric(words);
-          lyric.duration = duration;
-          app.setLyric(lyric);
+        // Set up event listeners
+        document.querySelector("#generate-animation-btn").addEventListener("click", function() {
+          const text = document.querySelector("#text-input").value;
+          const words = text.split(" ");
           
-          // Start animation
-          animation.play();
+          // Set up animation sequence
+          animation.add({
+            targets: ".animation-word",
+            opacity: 1,
+            translateY: [50, 0],
+            delay: anime.stagger(100),
+          });
+          animation.add({
+            targets: ".animation-word",
+            opacity: 0,
+            translateY: [0, -50],
+            delay: anime.stagger(100),
+          }, "+=5000");
+          
+          // Set up TextAlive lyrics
+          const songUrl = "https://www.youtube.com/watch?v=Zzu15ZezipE"; // Replace with desired song URL
+          app.songUrl = songUrl;
+          app.request("measures").then(function(measures) {
+            const duration = measures.duration;
+            const lyric = new TextAliveLyric(words);
+            lyric.duration = duration;
+            app.setLyric(lyric);
+            
+            // Start animation
+            animation.play();
+          });
         });
-      });
+      }
+      
+      // Check for TextAlive API and anime.js scripts
+      const apiInterval = setInterval(function() {
+        if (typeof TextAliveApp !== "undefined" && typeof anime !== "undefined") {
+          clearInterval(apiInterval);
+          onTextAliveApiLoad();
+        }
+      }, 100);
     </script>
   </body>
 </html>
