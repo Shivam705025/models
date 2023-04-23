@@ -1,88 +1,75 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Text to Logical Animation</title>
-  </head>
-  <body>
-    <div>
-      <textarea id="text-input" rows="10" cols="50"></textarea>
-    </div>
-    <button id="generate-animation-btn">Generate Animation</button>
-    <div id="animation-container"></div>
-    
-    <script>
-      // Load TextAlive API script
-      (function(d, s, id) {
-        var js, tjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
-        js = d.createElement(s); js.id = id;
-        js.src = "https://unpkg.com/textalive-app-api";
-        tjs.parentNode.insertBefore(js, tjs);
-      }(document, "script", "textalive-api"));
+<head>
+  <title>Image Analysis</title>
+  <style>
+    #image-preview {
+      max-width: 100%;
+      max-height: 400px;
+    }
+
+    #output {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <label for="image-file-input">Choose an image:</label>
+    <input type="file" id="image-file-input">
+    <button onclick="analyzeImage()">Analyze Image</button>
+  </div>
+  <div>
+    <img id="image-preview" src="">
+  </div>
+  <div id="output"></div>
+
+  <script>
+    function analyzeImage() {
+      const fileInput = document.getElementById('image-file-input');
+      const imagePreview = document.getElementById('image-preview');
+      const outputElement = document.getElementById('output');
       
-      // Load anime.js script
-      (function(d, s, id) {
-        var js, tjs = d.getElementsByTagName(s)[0];
-        if (d.getElementById(id)) return;
-        js = d.createElement(s); js.id = id;
-        js.src = "https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js";
-        tjs.parentNode.insertBefore(js, tjs);
-      }(document, "script", "animejs"));
-      
-      // Set up TextAlive API
-      function onTextAliveApiLoad() {
-        const app = new TextAliveApp();
-        app.options.player = new TextAlivePlayer(document.querySelector("#animation-container"));
-        
-        // Set up anime.js
-        const animation = anime.timeline({
-          autoplay: false,
-          easing: "easeOutExpo",
-          duration: 500,
-        });
-        
-        // Set up event listeners
-        document.querySelector("#generate-animation-btn").addEventListener("click", function() {
-          const text = document.querySelector("#text-input").value;
-          const words = text.split(" ");
-          
-          // Set up animation sequence
-          animation.add({
-            targets: ".animation-word",
-            opacity: 1,
-            translateY: [50, 0],
-            delay: anime.stagger(100),
-          });
-          animation.add({
-            targets: ".animation-word",
-            opacity: 0,
-            translateY: [0, -50],
-            delay: anime.stagger(100),
-          }, "+=5000");
-          
-          // Set up TextAlive lyrics
-          const songUrl = "https://www.youtube.com/watch?v=Zzu15ZezipE"; // Replace with desired song URL
-          app.songUrl = songUrl;
-          app.request("measures").then(function(measures) {
-            const duration = measures.duration;
-            const lyric = new TextAliveLyric(words);
-            lyric.duration = duration;
-            app.setLyric(lyric);
-            
-            // Start animation
-            animation.play();
-          });
-        });
+      if (!fileInput.files || !fileInput.files[0]) {
+        outputElement.innerText = 'Please choose an image.';
+        return;
       }
-      
-      // Check for TextAlive API and anime.js scripts
-      const apiInterval = setInterval(function() {
-        if (typeof TextAliveApp !== "undefined" && typeof anime !== "undefined") {
-          clearInterval(apiInterval);
-          onTextAliveApiLoad();
-        }
-      }, 100);
-    </script>
-  </body>
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const imageUrl = event.target.result;
+        imagePreview.src = imageUrl;
+        outputElement.innerText = 'Analyzing image...';
+        const encodedString = "c2std3lKMnZKdWN4VjhLTDRzUnRNTkJUM0JsYmtGSklrUFR3eWZkRkZZQXZsT2QwM3pj";
+        const decodedString = atob(encodedString);
+        const apiUrl = 'https://api.openai.com/v1/images/generations';
+        const apiKey = decodedString;
+
+        fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + apiKey
+          },
+          body: JSON.stringify({
+            model: 'image-alpha-001',
+            prompt: 'Analyze this image:',
+            images: [imageUrl],
+            temperature: 0.5,
+            max_length: 200
+          })
+        })
+        .then(response => response.json())
+        .then(result => {
+          outputElement.innerText = result.choices[0].text;
+        })
+        .catch(error => {
+          outputElement.innerText = 'Error analyzing image: ' + error;
+        });
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    }
+  </script>
+</body>
 </html>
