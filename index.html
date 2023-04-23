@@ -2,18 +2,53 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Sentence to Image Conversion</title>
+  <title>Text to Music Converter</title>
+  <!-- Include jQuery library -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-  <h1>Sentence to Image Conversion</h1>
-  <p>Enter a sentence:</p>
-  <input type="text" id="inputSentence">
-  <button onclick="analyzeSentence()">Analyze</button>
-  <br>
-  <img id="outputImage" style="display:none">
-  <p id="outputCaption"></p>
-  <script src="https://sdk.clarifai.com/js/clarifai-latest.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <script src="app.js"></script>
+  <div>
+    <label for="text-input">Enter Text:</label>
+    <input type="text" id="text-input">
+    <button id="search-btn">Search</button>
+  </div>
+  <div id="results-container"></div>
+
+  <script>
+    const apiKey = 'N2l5GVPRoI1zoKkh6dkGsE3uZ419Mn56';
+    const apiUrl = 'https://api.shutterstock.com/v2/audio/search';
+
+    $('#search-btn').click(() => {
+      const query = $('#text-input').val();
+
+      // Make request to Shutterstock Music API
+      $.ajax({
+        url: apiUrl,
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        },
+        data: {
+          'query': query,
+          'sort': 'popular',
+          'per_page': 1,
+          'moods': 'inspiring'
+        },
+        success: (response) => {
+          // Get track URL from response
+          const trackUrl = response.data[0].assets.preview_mp3.url;
+
+          // Add audio player to results container
+          $('#results-container').html(`
+            <audio controls>
+              <source src="${trackUrl}" type="audio/mpeg">
+            </audio>
+          `);
+        },
+        error: (xhr, status, error) => {
+          console.error(error);
+        }
+      });
+    });
+  </script>
 </body>
 </html>
