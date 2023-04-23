@@ -15,28 +15,47 @@
   <script>
     $(document).ready(function() {
       $('#generate-music-btn').click(function() {
-        const apiKey = 'v2/TjJsNUdWUFJvSTF6b0traDZka0dzRTN1WjQxOU1uNTYvMzg5OTM2Njc1L2N1c3RvbWVyLzQvbXFkaWttQW5ESWh1VmxvTkZhUkItUVZBbjNTcUJMR2N4WWF2d2wxZEdzbWY3TDVodnIwck1fdEtDZnpPT0hEZTJ4a3NpQnZTOWVicTV6U0FTc2hpeUFJVVRMSGtHVzltT3U1RkFmWEFnZmdVZE41bWxvTlJZdmlYeXdiY3g0Rkh4emZRS3RBcXZ2dWd5LU1XNkhsUERBUzVuM0o5ZUVvdFBPbl9aMlZkenhtdm41WE0xVkVvbmJRMXNyeUJXX1FyamZtSW10Zk1hc292NTdlUlE2YXpUQS9yTDN1TW9jX0dZUXdZYWQzazVtbTh3';
+        const consumerKey = 'N2l5GVPRoI1zoKkh6dkGsE3uZ419Mn56';
+        const consumerSecret = 'K2d1AAdXoiB4EqAd';
         const text = $('#text-input').val();
 
-        // Make request to Shutterstock API
+        // Get access token
         $.ajax({
-          url: `https://api.shutterstock.com/v2/audio/generate?text=${encodeURIComponent(text)}`,
+          url: 'https://api.shutterstock.com/v2/auth/access_token',
           headers: {
-            Authorization: `Bearer ${apiKey}`,
+            Authorization: `Basic ${btoa(`${consumerKey}:${consumerSecret}`)}`,
           },
-          method: 'GET',
+          method: 'POST',
           data: {
-            genre: 'rock',
-            tempo: 'medium',
-            mood: 'happy',
+            grant_type: 'client_credentials',
           },
-          success: function(data) {
-            // Get audio URL from response
-            const audioUrl = data.data.attributes.url;
+          success: function(response) {
+            const accessToken = response.access_token;
 
-            // Create audio player with URL
-            const audioPlayer = `<audio controls><source src="${audioUrl}" type="audio/mpeg"></audio>`;
-            $('#audio-player').html(audioPlayer);
+            // Make request to Shutterstock API
+            $.ajax({
+              url: `https://api.shutterstock.com/v2/audio/generate?text=${encodeURIComponent(text)}`,
+              headers: {
+                Authorization: `Bearer ${accessToken}`,
+              },
+              method: 'POST',
+              data: {
+                genre: 'rock',
+                tempo: 'medium',
+                mood: 'happy',
+              },
+              success: function(data) {
+                // Get audio URL from response
+                const audioUrl = data.data.attributes.url;
+
+                // Create audio player with URL
+                const audioPlayer = `<audio controls><source src="${audioUrl}" type="audio/mpeg"></audio>`;
+                $('#audio-player').html(audioPlayer);
+              },
+              error: function(error) {
+                console.log(error);
+              },
+            });
           },
           error: function(error) {
             console.log(error);
