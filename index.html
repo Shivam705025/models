@@ -1,75 +1,27 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Image Analysis</title>
+  <meta charset="UTF-8">
+  <title>Snake Game</title>
+  <script src="https://cdn.jsdelivr.net/npm/tracking/build/tracking.js"></script>
   <style>
-    #image-preview {
-      max-width: 100%;
-      max-height: 400px;
+    .canvas {
+      border: 1px solid black;
+      width: 200px;
+      height: 200px;
+      margin-bottom: 20px;
     }
 
-    #output {
-      margin-top: 20px;
-      font-size: 1.2em;
+    .video {
+      width: 200px;
+      height: 200px;
+      object-fit: cover;
     }
   </style>
 </head>
 <body>
-  <div>
-    <label for="image-file-input">Choose an image:</label>
-    <input type="file" id="image-file-input">
-    <button onclick="analyzeImage()">Analyze Image</button>
-  </div>
-  <div>
-    <img id="image-preview" src="">
-  </div>
-  <div id="output"></div>
-
-  <script>
-    function analyzeImage() {
-      const fileInput = document.getElementById('image-file-input');
-      const imagePreview = document.getElementById('image-preview');
-      const outputElement = document.getElementById('output');
-      
-      if (!fileInput.files || !fileInput.files[0]) {
-        outputElement.innerText = 'Please choose an image.';
-        return;
-      }
-
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        const imageUrl = event.target.result;
-        imagePreview.src = imageUrl;
-        outputElement.innerText = 'Analyzing image...';
-        const encodedString = "c2std3lKMnZKdWN4VjhLTDRzUnRNTkJUM0JsYmtGSklrUFR3eWZkRkZZQXZsT2QwM3pj";
-        const decodedString = atob(encodedString);
-        const apiUrl = 'https://api.openai.com/v1/images/generations';
-        const apiKey = decodedString;
-
-        fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + apiKey
-          },
-          body: JSON.stringify({
-            model: 'image-alpha-001',
-            prompt: 'Analyze this image:',
-            images: [imageUrl],
-            temperature: 0.5,
-            max_length: 200
-          })
-        })
-        .then(response => response.json())
-        .then(result => {
-          outputElement.innerText = result.choices[0].text;
-        })
-        .catch(error => {
-          outputElement.innerText = 'Error analyzing image: ' + error;
-        });
-      };
-      reader.readAsDataURL(fileInput.files[0]);
-    }
-  </script>
+  <canvas id="game-board" class="canvas"></canvas>
+  <video id="video" class="video"></video>
+  <script src="snake.js"></script>
 </body>
 </html>
