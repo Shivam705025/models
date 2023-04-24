@@ -44,6 +44,19 @@
             // Move snake
             snake.x += snake.dx;
             snake.y += snake.dy;
+
+            // Wrap snake around the canvas
+            if (snake.x < 0) {
+              snake.x = canvas.width - 10;
+            } else if (snake.x >= canvas.width) {
+              snake.x = 0;
+            }
+
+            if (snake.y < 0) {
+              snake.y = canvas.height - 10;
+            } else if (snake.y >= canvas.height) {
+              snake.y = 0;
+            }
          
             // Check for collision with food
             if (snake.x === food.x && snake.y === food.y) {
@@ -55,17 +68,14 @@
                food.y = Math.floor(Math.random() * 20) * 10;
             }
          
-            // Check for game over conditions
-            if (snake.x < 0 || snake.x > 190 || snake.y < 0 || snake.y > 190) {
-               // Game over
-               clearInterval(gameInterval);
-               alert('Game over!');
-            }
-         
             // Draw game elements
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = 'green';
             snake.cells.forEach(cell => ctx.fillRect(cell.x, cell.y, 10, 10));
+            snake.cells.push({ x: snake.x, y: snake.y });
+            if (snake.cells.length > 10) {
+              snake.cells.shift();
+            }
             ctx.fillStyle = 'red';
             ctx.fillRect(food.x, food.y, 10, 10);
          }
@@ -74,64 +84,50 @@
          const gameInterval = setInterval(loop, 100);
          
          // Detect head movements using tracking.js and map to snake movements
-         const video = document.getElementById('video');
-         
-         navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
-            video.srcObject = stream;
-            video.play();
-         
-            const tracker = new tracking.ObjectTracker('face');
-            tracker.setInitialScale(4);
-            tracker.setStepSize(2);
-            tracker.setEdgesDensity(0.1);
-         
-            tracking.track('#video', tracker, { camera: true });
-         
-            tracker.on('track', event => {
-               if (event.data.length === 0) {
-                  // No face detected
-                  return;
-               }
-         
-               // Get position of head
-               const position = event.data[0].bbox;
-               const centerX = position[0] + position[2] / 2;
-               const centerY = position[1] + position[3] / 2;
-         
-               // Map head position to snake movements
-              // Map head position to snake movements
-if (centerX < canvas.width / 3) {
-  snake.dx = -10;
-  snake.dy = 0;
-} else if (centerX > canvas.width / 3 * 2) {
-  snake.dx = 10;
-  snake.dy = 0;
-} else if (centerY < canvas.height / 3) {
-  snake.dx = 0;
-  snake.dy = -10;
-} else if (centerY > canvas.height / 3 * 2) {
-  snake.dx = 0;
-  snake.dy = 10;
-}
+         // Detect head movements using tracking.js and map to snake movements
+const video = document.getElementById('video');
 
-// Handle user input to pause and restart the game
-document.addEventListener('keydown', event => {
-  switch (event.code) {
-    case 'KeyP':
-      if (gameInterval) {
-        clearInterval(gameInterval);
-        gameInterval = null;
-      } else {
-        gameInterval = setInterval(loop, 100);
+navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+  video.srcObject = stream;
+  video.play();
+
+  const tracker = new tracking.ObjectTracker('face');
+  tracker.setInitialScale(4);
+  tracker.setStepSize(2);
+  tracker.setEdgesDensity(0.1);
+
+  tracking.track('#video', tracker, { camera: true });
+
+  tracker.on('track', event => {
+    if (event.data.length === 0) {
+      // No faces detected, stop snake movement
+      snake.dx = 0;
+      snake.dy = 0;
+    } else {
+      // Get head position from first detected face
+      const head = event.data[0];
+      const x = head.x + head.width / 2;
+      const y = head.y + head.height / 2;
+
+      // Map head position to snake movement
+      if (x < canvas.width / 3) {
+        snake.dx = -10;
+        snake.dy = 0;
+      } else if (x > (canvas.width / 3) * 2) {
+        snake.dx = 10;
+        snake.dy = 0;
+      } else if (y < canvas.height / 3) {
+        snake.dx = 0;
+        snake.dy = -10;
+      } else if (y > (canvas.height / 3) * 2) {
+        snake.dx = 0;
+        snake.dy = 10;
       }
-      break;
-    case 'KeyR':
-      window.location.reload();
-      break;
-  }
+    }
+  });
+}).catch(function(error) {
+  console.error('Unable to access the camera.', error);
 });
-                });
-});
-</script>
-</body>
+      </script>
+   </body>
 </html>
