@@ -1,82 +1,68 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8" />
-    <title>Facial Expression Detection</title>
-    <!-- Load required scripts -->
+    <meta charset="UTF-8">
+    <title>Face Expression Recognition</title>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@0.4.4/dist/face-landmarks-detection.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-expression-recognition@0.3.0/dist/face-expression-recognition.min.js"></script>
   </head>
   <body>
-    <h1>Facial Expression Detection</h1>
-    <video id="video" width="640" height="480" autoplay></video>
-    <canvas id="canvas" width="640" height="480"></canvas>
-    <p id="expression">No expression detected</p>
+    <div id="video-container"></div>
+    <div id="result-container"></div>
+
     <script>
-      // Initialize face-api.js models
-      Promise.all([
-        faceLandmarksDetection.load(
-          faceLandmarksDetection.SupportedPackages.mediapipeFacemesh
-        ),
-        faceExpressionRecognition.load(
-          faceExpressionRecognition.SupportedPackages.tfjs
-        ),
-      ]).then(([faceLandmarksModel, faceExpressionModel]) => {
-        // Get video stream and set it as source for video element
-        navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
-          const video = document.getElementById("video");
-          video.srcObject = stream;
-          video.play();
-        });
+      // Load face detection model
+      const faceDetector = new window.FaceDetector({fastMode: true});
 
-        // Get canvas element and set up drawing context
-        const canvas = document.getElementById("canvas");
-        const context = canvas.getContext("2d");
+      // Load face expression recognition model
+      let model;
+      async function loadModel() {
+        model = await tf.loadLayersModel('https://tfhub.dev/tensorflow/tfjs-model/face-expression-recognition/1/default/1');
+      }
+      loadModel();
 
-        // Set up face detection options
-        const faceDetectionOptions = new faceLandmarksDetection.FaceDetectionOptions(
-          {
-            enableFaceExpressions: true,
-          }
-        );
-
-        // Continuously detect faces and expressions
-        setInterval(async () => {
-          // Draw video frame onto canvas
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-          // Detect faces in canvas
-          const faces = await faceLandmarksModel.estimateFaces({
-            input: canvas,
-            faceDetectionOptions,
-          });
-
-          // Check if any faces were detected
-          if (faces.length > 0) {
-            // Get the first detected face and its expression
-            const face = faces[0];
-            const expressions = await faceExpressionModel.predictExpressions(
-              faceLandmarksModel,
-              face.scaledMesh
-            );
-
-            // Find the highest-scoring expression
-            let expression = "No expression detected";
-            let maxScore = 0;
-            Object.entries(expressions).forEach(([key, value]) => {
-              if (value > maxScore) {
-                expression = key;
-                maxScore = value;
-              }
-            });
-
-            // Update expression display
-            const expressionDisplay = document.getElementById("expression");
-            expressionDisplay.textContent = `Detected expression: ${expression}`;
-          }
-        }, 100);
+      // Set up video stream
+      const video = document.createElement('video');
+      video.autoplay = true;
+      video.width = 640;
+      video.height = 480;
+      const videoContainer = document.getElementById('video-container');
+      videoContainer.appendChild(video);
+      navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+        video.srcObject = stream;
+        video.play();
       });
+
+      // Detect faces and expressions
+      const resultContainer = document.getElementById('result-container');
+      setInterval(async () => {
+        const faces = await faceDetector.detect(video);
+        if (faces.length > 0) {
+          const face = faces[0].boundingBox;
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const image = tf.browser.fromPixels(canvas);
+          const resized = tf.image.resizeBilinear(image, [48, 48]);
+          const gray = resized.mean(2);
+          const expanded = gray.expandDims(2).expandDims();
+          const predictions = model.predict(expanded);
+          const probabilities = predictions.dataSync();
+          const emotions = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral'];
+          const maxProb = Math.max(...probabilities);
+          const maxProbIndex = probabilities.indexOf(maxProb);
+          const emotion = emotions[maxProbIndex];
+          resultContainer.innerText = `Detected expression: ${emotion} (${maxProb.toFixed(4)})`;
+          image.dispose();
+          resized.dispose();
+          gray.dispose();
+          expanded.dispose();
+          predictions.dispose();
+        } else {
+          resultContainer.innerText = 'No faces detected.';
+        }
+      }, 100);
     </script>
   </body>
 </html>
