@@ -12,7 +12,7 @@
 </head>
 <body>
 	<h1>Voice-Activated Video Player</h1>
-	<p>Click the button and say "pepe walk" "pepe savage" "pepe glasses" "pepe yoga" "pepe exercise" "pepe monkey" "pepe phone" "pepe globe" and see the magic.</p>
+	<p>Click the button and say "play video one" or "play video two" to play the corresponding video.</p>
 	<button id="start-button">Start Listening</button>
 	<video id="video-player" autoplay></video>
 
@@ -40,6 +40,12 @@
 	// Define a default video URL to play if no recognized commands are given.
 	const defaultVideoUrl = "song.mp4";
 
+	// Play the default video when the page loads.
+	const videoPlayer = document.getElementById('video-player');
+	videoPlayer.src = defaultVideoUrl;
+	videoPlayer.loop = true;
+	videoPlayer.play();
+
 	// When the recognition object detects speech, it will call this function.
 	recognition.onresult = function(event) {
 		// Get the first result from the event.
@@ -48,32 +54,28 @@
 		// If the result is one of the recognized commands, play the corresponding video.
 		if (result.toLowerCase() in videos) {
 			const videoUrl = videos[result.toLowerCase()];
-			const videoPlayer = document.getElementById('video-player');
 			videoPlayer.src = videoUrl;
 			videoPlayer.play();
 		}
 	}
 
-	// When the recognition object finishes, play the default video in a loop.
+	// When the recognition object finishes, play the default video in a loop if no other video is playing.
 	recognition.onend = function() {
-	const videoPlayer = document.getElementById('video-player');
-	if (!videoPlayer.src) {
-		videoPlayer.src = defaultVideoUrl;
-		videoPlayer.loop = true;
-		videoPlayer.play();
+		if (videoPlayer.ended && !videoPlayer.paused) {
+			videoPlayer.src = defaultVideoUrl;
+			videoPlayer.loop = true;
+			videoPlayer.play();
+		}
 	}
-}
 
-
-	// When the user clicks the "Start Listening" button, start the recognition process and pause the video.
+	// When the user clicks the "Start Listening" button, stop earlier listening and start a new recognition process, and pause the video.
 	document.getElementById('start-button').onclick = function() {
+		recognition.abort();
 		recognition.start();
-		const videoPlayer = document.getElementById('video-player');
 		videoPlayer.pause();
 	};
-	
+
 	// To ensure there is no time difference between two frames, we can set the video player's 'playsinline' attribute to true.
-	const videoPlayer = document.getElementById('video-player');
 	videoPlayer.setAttribute('playsinline', true);
 	</script>
 </body>
