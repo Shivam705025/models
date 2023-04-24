@@ -19,6 +19,8 @@
       <video id="video" width="640" height="480" autoplay></video>
       <canvas id="game-board" width="640" height="480"></canvas>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.0/tracking-min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/tracking/build/data/face-min.js"></script>
+
 
       <script>
          // Initialize game board
@@ -91,7 +93,7 @@ navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
   video.srcObject = stream;
   video.play();
 
-  const tracker = new tracking.ObjectTracker('eye');
+  const tracker = new tracking.ObjectTracker('head');
   tracker.setInitialScale(4);
   tracker.setStepSize(2);
   tracker.setEdgesDensity(0.1);
