@@ -1,135 +1,82 @@
 <!DOCTYPE html>
 <html>
-   <head>
-      <title>Snake Game with AI Head Control</title>
-      <style>
-         canvas {
-         background-color: #f5f5f5;
-         border: 2px solid #ddd;
-         margin: 0 auto;
-         display: block;
-         position: absolute;
-         top: 50%;
-         left: 50%;
-         transform: translate(-50%, -50%);
-         }
-      </style>
-   </head>
-   <body>
-      <video id="video" width="640" height="480" autoplay></video>
-      <canvas id="game-board" width="640" height="480"></canvas>
-      <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.0/tracking-min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/tracking/build/data/face-min.js"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Facial Expression Detection</title>
+    <!-- Load required scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@0.4.4/dist/face-landmarks-detection.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-expression-recognition@0.3.0/dist/face-expression-recognition.min.js"></script>
+  </head>
+  <body>
+    <h1>Facial Expression Detection</h1>
+    <video id="video" width="640" height="480" autoplay></video>
+    <canvas id="canvas" width="640" height="480"></canvas>
+    <p id="expression">No expression detected</p>
+    <script>
+      // Initialize face-api.js models
+      Promise.all([
+        faceLandmarksDetection.load(
+          faceLandmarksDetection.SupportedPackages.mediapipeFacemesh
+        ),
+        faceExpressionRecognition.load(
+          faceExpressionRecognition.SupportedPackages.tfjs
+        ),
+      ]).then(([faceLandmarksModel, faceExpressionModel]) => {
+        // Get video stream and set it as source for video element
+        navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+          const video = document.getElementById("video");
+          video.srcObject = stream;
+          video.play();
+        });
 
+        // Get canvas element and set up drawing context
+        const canvas = document.getElementById("canvas");
+        const context = canvas.getContext("2d");
 
-      <script>
-         // Initialize game board
-         const canvas = document.getElementById('game-board');
-         const ctx = canvas.getContext('2d');
-         
-         // Define game elements
-         const snake = {
-            x: 10,
-            y: 10,
-            dx: 10,
-            dy: 0,
-            cells: []
-         };
-         
-         const food = {
-            x: Math.floor(Math.random() * 20) * 10,
-            y: Math.floor(Math.random() * 20) * 10
-         };
-         
-         // Define game loop
-         function loop() {
-            // Move snake
-            snake.x += snake.dx;
-            snake.y += snake.dy;
+        // Set up face detection options
+        const faceDetectionOptions = new faceLandmarksDetection.FaceDetectionOptions(
+          {
+            enableFaceExpressions: true,
+          }
+        );
 
-            // Wrap snake around the canvas
-            if (snake.x < 0) {
-              snake.x = canvas.width - 10;
-            } else if (snake.x >= canvas.width) {
-              snake.x = 0;
-            }
+        // Continuously detect faces and expressions
+        setInterval(async () => {
+          // Draw video frame onto canvas
+          context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            if (snake.y < 0) {
-              snake.y = canvas.height - 10;
-            } else if (snake.y >= canvas.height) {
-              snake.y = 0;
-            }
-         
-            // Check for collision with food
-            if (snake.x === food.x && snake.y === food.y) {
-               // Increase snake length
-               snake.cells.push({ x: snake.x, y: snake.y });
-         
-               // Move food to random location
-               food.x = Math.floor(Math.random() * 20) * 10;
-               food.y = Math.floor(Math.random() * 20) * 10;
-            }
-         
-            // Draw game elements
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = 'green';
-            snake.cells.forEach(cell => ctx.fillRect(cell.x, cell.y, 10, 10));
-            snake.cells.push({ x: snake.x, y: snake.y });
-            if (snake.cells.length > 10) {
-              snake.cells.shift();
-            }
-            ctx.fillStyle = 'red';
-            ctx.fillRect(food.x, food.y, 10, 10);
-         }
-         
-         // Start game loop
-         const gameInterval = setInterval(loop, 100);
-         
-         // Detect head movements using tracking.js and map to snake movements
-         // Detect head movements using tracking.js and map to snake movements
-const video = document.getElementById('video');
+          // Detect faces in canvas
+          const faces = await faceLandmarksModel.estimateFaces({
+            input: canvas,
+            faceDetectionOptions,
+          });
 
-navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
-  video.srcObject = stream;
-  video.play();
+          // Check if any faces were detected
+          if (faces.length > 0) {
+            // Get the first detected face and its expression
+            const face = faces[0];
+            const expressions = await faceExpressionModel.predictExpressions(
+              faceLandmarksModel,
+              face.scaledMesh
+            );
 
-  const tracker = new tracking.ObjectTracker('head');
-  tracker.setInitialScale(4);
-  tracker.setStepSize(2);
-  tracker.setEdgesDensity(0.1);
+            // Find the highest-scoring expression
+            let expression = "No expression detected";
+            let maxScore = 0;
+            Object.entries(expressions).forEach(([key, value]) => {
+              if (value > maxScore) {
+                expression = key;
+                maxScore = value;
+              }
+            });
 
-  tracking.track('#video', tracker, { camera: true });
-
-  tracker.on('track', event => {
-    if (event.data.length === 0) {
-      // No faces detected, stop snake movement
-      snake.dx = 0;
-      snake.dy = 0;
-    } else {
-      // Get head position from first detected face
-      const head = event.data[0];
-      const x = head.x + head.width / 2;
-      const y = head.y + head.height / 2;
-
-      // Map head position to snake movement
-      if (x < canvas.width / 3) {
-        snake.dx = -10;
-        snake.dy = 0;
-      } else if (x > (canvas.width / 3) * 2) {
-        snake.dx = 10;
-        snake.dy = 0;
-      } else if (y < canvas.height / 3) {
-        snake.dx = 0;
-        snake.dy = -10;
-      } else if (y > (canvas.height / 3) * 2) {
-        snake.dx = 0;
-        snake.dy = 10;
-      }
-    }
-  });
-}).catch(function(error) {
-  console.error('Unable to access the camera.', error);
-});
-      </script>
-   </body>
+            // Update expression display
+            const expressionDisplay = document.getElementById("expression");
+            expressionDisplay.textContent = `Detected expression: ${expression}`;
+          }
+        }, 100);
+      });
+    </script>
+  </body>
 </html>
