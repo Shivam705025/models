@@ -39,12 +39,16 @@
 
 	// Define a default video URL to play if no recognized commands are given.
 	const defaultVideoUrl = "song.mp4";
+	
+	
 
 	// Play the default video when the page loads.
 	const videoPlayer = document.getElementById('video-player');
 	videoPlayer.src = defaultVideoUrl;
 	videoPlayer.loop = true;
+	videoPlayer.autoplay = true;
 	videoPlayer.play();
+	
 
 	// When the recognition object detects speech, it will call this function.
 	recognition.onresult = function(event) {
