@@ -8,14 +8,62 @@
 			max-width: 100%;
 			height: auto;
 		}
+		.my-button {
+  background-color: #4CAF50; /* Set the background color */
+  border: none; /* Remove the border */
+  color: white; /* Set the text color */
+  padding: 10px 20px; /* Set the padding */
+  text-align: center; /* Center the text */
+  text-decoration: none; /* Remove underline from text */
+  display: inline-block; /* Make the button an inline element */
+  font-size: 16px; /* Set the font size */
+  border-radius: 5px; /* Add rounded corners */
+  transition: background-color 0.3s ease; /* Add a transition effect */
+}
+
+/* Hover effect */
+.my-button:hover {
+  background-color: #3e8e41;
+}
+.my-heading {
+  font-family: 'Montserrat', sans-serif; /* Set the font family */
+  font-size: 48px; /* Set the font size */
+  font-weight: bold; /* Set the font weight to bold */
+  color: #333; /* Set the text color */
+  text-align: center; /* Center the text */
+  text-transform: uppercase; /* Convert text to uppercase */
+  letter-spacing: 2px; /* Add letter spacing */
+  margin-top: 50px; /* Add top margin */
+}
+		.my-paragraph {
+  color: #006400; /* Set the dark green color */
+  font-size: 16px; /* Set the font size */
+  line-height: 1.5; /* Set the line height */
+  margin: 20px 0; /* Add top and bottom margin */
+}
+
 	</style>
 </head>
 <body>
-	<h1>Voice-Activated Video Player</h1>
-	<p>Click the button and say "play video one" or "play video two" to play the corresponding video.</p>
-	<button id="start-button">Start Listening</button>
+	<div align="center">
+	<h1 class="my-heading">Talk to Pepedash</h1>
+	
+	</div>
+	<div align="center">
+	
 	<video id="video-player" autoplay></video>
-
+	<button class="my-button" id="start-button">Give Command</button>
+	<br>
+	<p class="my-paragraph">Click the button and say </p>
+		<p class="my-paragraph">walk</p>
+		<p class="my-paragraph">savage</p>
+		<p class="my-paragraph">glasses</p>
+		<p class="my-paragraph">yoga</p>
+		<p class="my-paragraph">exercise</p>
+		<p class="my-paragraph">monkey</p>
+		<p class="my-paragraph">phone</p>
+		<p class="my-paragraph">globe</p>
+	</div>
 	<script>
 	// First, we create a new instance of the SpeechRecognition object.
 	const recognition = new window.webkitSpeechRecognition();
