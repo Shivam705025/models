@@ -1,93 +1,142 @@
 <!DOCTYPE html>
 <html>
-<head>
-    <meta charset="utf-8">
-    <title>AI Image Inpainting</title>
+  <head>
+    <title>Google Dragon Game</title>
     <style>
-        img {
-            max-width: 600px;
-            margin-bottom: 20px;
-        }
-        canvas {
-            display: none;
-        }
+      canvas {
+        border: 1px solid black;
+      }
     </style>
-</head>
-<body>
-    <h1>AI Image Inpainting</h1>
-    <input type="file" id="file-input" accept="image/*">
-    <br>
-    <canvas id="canvas"></canvas>
-    <img id="image-preview">
-    <br>
-    <button id="inpaint-button" disabled>Inpaint Image</button>
-    <script src="https://cdn.jsdelivr.net/npm/@openai/openai-js-sdk@1.0.1/dist/openai-js-sdk.umd.js"></script>
-    <script>
-        const encodedString = "c2std3lKMnZKdWN4VjhLTDRzUnRNTkJUM0JsYmtGSklrUFR3eWZkRkZZQXZsT2QwM3pj";
-        const decodedString = atob(encodedString);
-        const openaiApiKey = decodedString;
-        const openaiEndpoint = "https://api.openai.com/v1/engines/davinci/completions";
-        const openaiModel = "text-davinci-002";
-        const fileInput = document.getElementById("file-input");
-        const canvas = document.getElementById("canvas");
-        const imagePreview = document.getElementById("image-preview");
-        const inpaintButton = document.getElementById("inpaint-button");
+  </head>
+  <body>
+    <canvas id="gameCanvas"></canvas>
+      <script>
+          // Game configuration
+var GAME_WIDTH = 800;
+var GAME_HEIGHT = 600;
+var OBSTACLE_FREQUENCY = 0.02; // Probability of generating an obstacle
+var OBSTACLE_SPEED = 5;
+var OBSTACLE_GAP = 200; // Gap between the two parts of an obstacle
+var DRAGON_SPEED = 5;
+var DRAGON_ROTATION_SPEED = 0.1;
 
-        fileInput.addEventListener("change", function() {
-            const file = fileInput.files[0];
-            if (file.type.match(/^image\//)) {
-                const reader = new FileReader();
-                reader.onload = function() {
-                    const img = new Image();
-                    img.onload = function() {
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        const ctx = canvas.getContext("2d");
-                        ctx.drawImage(img, 0, 0);
-                        imagePreview.src = canvas.toDataURL();
-                        inpaintButton.disabled = false;
-                    };
-                    img.src = reader.result;
-                };
-                reader.readAsDataURL(file);
-            } else {
-                alert("Please choose an image file.");
-            }
-        });
+// Game variables
+var canvas = document.getElementById("gameCanvas");
+var ctx = canvas.getContext("2d");
+var dragon = null;
+var obstacles = [];
+var score = 0;
+var lastObstacleTime = 0;
 
-        inpaintButton.addEventListener("click", function() {
-            inpaintButton.disabled = true;
-            const ctx = canvas.getContext("2d");
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const base64Data = canvas.toDataURL().split(",")[1];
-            const openaiClient = new OpenAI({
-                apiKey: openaiApiKey,
-            });
-            openaiClient.completions.create({
-                engine: "davinci",
-                prompt: `Please complete the image: ${base64Data}`,
-                maxTokens: 512,
-                n: 1,
-                stop: ["\n"],
-                temperature: 0.5,
-                presencePenalty: 0,
-                frequencyPenalty: 0,
-            })
-            .then(response => {
-                const result = response.choices[0].text.trim();
-                const img = new Image();
-                img.onload = function() {
-                    ctx.drawImage(img, 0, 0);
-                    imagePreview.src = canvas.toDataURL();
-                    inpaintButton.disabled = false;
-                };
-                img.src = result;
-            })
-            .catch(error => {
-                console.error(error);
-                inpaintButton.disabled = false;
-            });
-        });
-    </script>
-</body>
+// Initialize the game elements
+function init() {
+  dragon = new Dragon(GAME_WIDTH / 2, GAME_HEIGHT / 2);
+}
+
+// Update the game state
+function update() {
+  // Update the dragon
+  if (isMobile()) {
+    dragon.handleGyroscope();
+  } else {
+    dragon.handleKeyboard();
+  }
+  dragon.update();
+
+  // Generate new obstacles
+  var currentTime = Date.now();
+  if (Math.random() < OBSTACLE_FREQUENCY && currentTime - lastObstacleTime > 1000) {
+    obstacles.push(new Obstacle(GAME_WIDTH, OBSTACLE_GAP));
+    lastObstacleTime = currentTime;
+  }
+
+  // Update the obstacles
+  for (var i = 0; i < obstacles.length; i++) {
+    obstacles[i].x -= OBSTACLE_SPEED;
+    if (obstacles[i].x < -obstacles[i].width) {
+      obstacles.splice(i, 1);
+      i--;
+    }
+  }
+
+  // Check for collisions
+  for (var i = 0; i < obstacles.length; i++) {
+    if (dragon.collidesWith(obstacles[i])) {
+      endGame();
+      return;
+    }
+  }
+
+  // Update the score
+  score += 1;
+}
+
+// Draw the game elements
+function draw() {
+  // Clear the canvas
+  ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+
+  // Draw the dragon
+  dragon.draw();
+
+  // Draw the obstacles
+  for (var i = 0; i < obstacles.length; i++) {
+    obstacles[i].draw();
+  }
+
+  // Draw the score
+  ctx.font = "20px Arial";
+  ctx.fillText("Score: " + score, 10, 30);
+}
+
+// Main game loop
+function gameLoop() {
+  update();
+  draw();
+}
+
+// Start the game loop
+init();
+var gameInterval = setInterval(gameLoop, 16);
+
+// Handle mobile events
+function isMobile() {
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
+window.addEventListener("deviceorientation", function(event) {
+  if (isMobile()) {
+    dragon.handleGyroscope(event.gamma, event.beta);
+  }
+});
+
+// Handle keyboard events
+window.addEventListener("keydown", function(event) {
+  if (!isMobile()) {
+    dragon.handleKeyboard(event.keyCode);
+  }
+});
+
+// Handle end game
+// Handle end game
+function endGame() {
+  clearInterval(gameInterval);
+  if (isMobile()) {
+    window.removeEventListener("deviceorientation");
+  } else {
+    window.removeEventListener("keydown");
+  }
+  if (confirm("Game over! Your score is: " + score + "\nDo you want to play again?")) {
+    // Restart the game
+    dragon = null;
+    obstacles = [];
+    score = 0;
+    lastObstacleTime = 0;
+    init();
+    gameInterval = setInterval(gameLoop, 16);
+  }
+}
+
+      </script>
+  </body>
 </html>
