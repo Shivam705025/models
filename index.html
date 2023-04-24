@@ -7,6 +7,8 @@
 		video {
 			max-width: 100%;
 			height: auto;
+			opacity: 0;
+			pointer-events: none;
 		}
 	</style>
 </head>
@@ -51,6 +53,7 @@
 			const videoPlayer = document.getElementById('video-player');
 			videoPlayer.src = videoUrl;
 			videoPlayer.play();
+			videoPlayer.style.opacity = 1; // Make the video player visible
 		}
 	}
 
@@ -60,6 +63,7 @@
 		videoPlayer.src = defaultVideoUrl;
 		videoPlayer.loop = true;
 		videoPlayer.play();
+		videoPlayer.style.opacity = 0; // Hide the video player again
 	}
 
 	// When the user clicks the "Start Listening" button, start the recognition process and pause the video.
@@ -67,11 +71,8 @@
 		recognition.start();
 		const videoPlayer = document.getElementById('video-player');
 		videoPlayer.pause();
+		videoPlayer.style.opacity = 0; // Hide the video player when listening starts
 	};
-	
-	// To ensure there is no time difference between two frames, we can set the video player's 'playsinline' attribute to true.
-	const videoPlayer = document.getElementById('video-player');
-	videoPlayer.setAttribute('playsinline', true);
 	</script>
 </body>
 </html>
