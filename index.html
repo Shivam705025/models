@@ -56,11 +56,14 @@
 
 	// When the recognition object finishes, play the default video in a loop.
 	recognition.onend = function() {
-		const videoPlayer = document.getElementById('video-player');
+	const videoPlayer = document.getElementById('video-player');
+	if (!videoPlayer.src) {
 		videoPlayer.src = defaultVideoUrl;
 		videoPlayer.loop = true;
 		videoPlayer.play();
 	}
+}
+
 
 	// When the user clicks the "Start Listening" button, start the recognition process and pause the video.
 	document.getElementById('start-button').onclick = function() {
