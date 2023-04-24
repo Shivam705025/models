@@ -1,89 +1,15 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta charset="UTF-8">
-    <title>Bouncing Ball Game with Voice Control</title>
+    <meta charset="utf-8" />
+    <title>3D Frog Model</title>
+    <script src="https://cdn.jsdelivr.net/npm/@google/model-viewer@2.1.0/dist/model-viewer.min.js"></script>
   </head>
   <body>
-    <canvas id="game-canvas"></canvas>
-    <div id="voice-input"></div>
-    <script>
-      // Ball object
-      function Ball(x, y, r, dx, dy) {
-        this.x = x;
-        this.y = y;
-        this.r = r;
-        this.dx = dx;
-        this.dy = dy;
-      }
-
-      // Render ball on canvas
-      Ball.prototype.render = function(ctx) {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-        ctx.fillStyle = "#FF5733";
-        ctx.fill();
-        ctx.closePath();
-      }
-
-      // Move ball based on voice command
-      Ball.prototype.move = function(command) {
-        switch(command) {
-          case "left":
-            this.x -= this.dx;
-            break;
-          case "right":
-            this.x += this.dx;
-            break;
-          case "up":
-            this.y -= this.dy;
-            break;
-          case "down":
-            this.y += this.dy;
-            break;
-        }
-      }
-
-      // Detect collisions with walls
-      Ball.prototype.detectCollisions = function(canvas) {
-        if(this.x - this.r <= 0 || this.x + this.r >= canvas.width) {
-          this.dx = -this.dx;
-        }
-        if(this.y - this.r <= 0 || this.y + this.r >= canvas.height) {
-          this.dy = -this.dy;
-        }
-      }
-
-      // Set up voice input
-      var recognition = new webkitSpeechRecognition();
-      var inputDiv = document.getElementById("voice-input");
-      recognition.continuous = true;
-      recognition.onresult = function(event) {
-        var last = event.results.length - 1;
-        var command = event.results[last][0].transcript.toLowerCase();
-        inputDiv.innerHTML = command;
-        ball.move(command);
-      }
-
-      // Set up game loop
-      function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ball.render(ctx);
-        ball.detectCollisions(canvas);
-        requestAnimationFrame(gameLoop);
-      }
-
-      // Set up canvas
-      var canvas = document.getElementById("game-canvas");
-      var ctx = canvas.getContext("2d");
-      canvas.width = 640;
-      canvas.height = 480;
-
-      // Create ball object
-      var ball = new Ball(canvas.width/2, canvas.height/2, 20, 2, 2);
-
-      // Start game loop
-      gameLoop();
-    </script>
+    <model-viewer
+      src="frog.gltf"
+      alt="3D Frog Model"
+      camera-controls
+    ></model-viewer>
   </body>
 </html>
