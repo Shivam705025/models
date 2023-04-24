@@ -1,142 +1,89 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Google Dragon Game</title>
-    <style>
-      canvas {
-        border: 1px solid black;
-      }
-    </style>
+    <meta charset="UTF-8">
+    <title>Bouncing Ball Game with Voice Control</title>
   </head>
   <body>
-    <canvas id="gameCanvas"></canvas>
-      <script>
-          // Game configuration
-var GAME_WIDTH = 800;
-var GAME_HEIGHT = 600;
-var OBSTACLE_FREQUENCY = 0.02; // Probability of generating an obstacle
-var OBSTACLE_SPEED = 5;
-var OBSTACLE_GAP = 200; // Gap between the two parts of an obstacle
-var DRAGON_SPEED = 5;
-var DRAGON_ROTATION_SPEED = 0.1;
+    <canvas id="game-canvas"></canvas>
+    <div id="voice-input"></div>
+    <script>
+      // Ball object
+      function Ball(x, y, r, dx, dy) {
+        this.x = x;
+        this.y = y;
+        this.r = r;
+        this.dx = dx;
+        this.dy = dy;
+      }
 
-// Game variables
-var canvas = document.getElementById("gameCanvas");
-var ctx = canvas.getContext("2d");
-var dragon = null;
-var obstacles = [];
-var score = 0;
-var lastObstacleTime = 0;
+      // Render ball on canvas
+      Ball.prototype.render = function(ctx) {
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+        ctx.fillStyle = "#FF5733";
+        ctx.fill();
+        ctx.closePath();
+      }
 
-// Initialize the game elements
-function init() {
-  dragon = new Dragon(GAME_WIDTH / 2, GAME_HEIGHT / 2);
-}
+      // Move ball based on voice command
+      Ball.prototype.move = function(command) {
+        switch(command) {
+          case "left":
+            this.x -= this.dx;
+            break;
+          case "right":
+            this.x += this.dx;
+            break;
+          case "up":
+            this.y -= this.dy;
+            break;
+          case "down":
+            this.y += this.dy;
+            break;
+        }
+      }
 
-// Update the game state
-function update() {
-  // Update the dragon
-  if (isMobile()) {
-    dragon.handleGyroscope();
-  } else {
-    dragon.handleKeyboard();
-  }
-  dragon.update();
+      // Detect collisions with walls
+      Ball.prototype.detectCollisions = function(canvas) {
+        if(this.x - this.r <= 0 || this.x + this.r >= canvas.width) {
+          this.dx = -this.dx;
+        }
+        if(this.y - this.r <= 0 || this.y + this.r >= canvas.height) {
+          this.dy = -this.dy;
+        }
+      }
 
-  // Generate new obstacles
-  var currentTime = Date.now();
-  if (Math.random() < OBSTACLE_FREQUENCY && currentTime - lastObstacleTime > 1000) {
-    obstacles.push(new Obstacle(GAME_WIDTH, OBSTACLE_GAP));
-    lastObstacleTime = currentTime;
-  }
+      // Set up voice input
+      var recognition = new webkitSpeechRecognition();
+      var inputDiv = document.getElementById("voice-input");
+      recognition.continuous = true;
+      recognition.onresult = function(event) {
+        var last = event.results.length - 1;
+        var command = event.results[last][0].transcript.toLowerCase();
+        inputDiv.innerHTML = command;
+        ball.move(command);
+      }
 
-  // Update the obstacles
-  for (var i = 0; i < obstacles.length; i++) {
-    obstacles[i].x -= OBSTACLE_SPEED;
-    if (obstacles[i].x < -obstacles[i].width) {
-      obstacles.splice(i, 1);
-      i--;
-    }
-  }
+      // Set up game loop
+      function gameLoop() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ball.render(ctx);
+        ball.detectCollisions(canvas);
+        requestAnimationFrame(gameLoop);
+      }
 
-  // Check for collisions
-  for (var i = 0; i < obstacles.length; i++) {
-    if (dragon.collidesWith(obstacles[i])) {
-      endGame();
-      return;
-    }
-  }
+      // Set up canvas
+      var canvas = document.getElementById("game-canvas");
+      var ctx = canvas.getContext("2d");
+      canvas.width = 640;
+      canvas.height = 480;
 
-  // Update the score
-  score += 1;
-}
+      // Create ball object
+      var ball = new Ball(canvas.width/2, canvas.height/2, 20, 2, 2);
 
-// Draw the game elements
-function draw() {
-  // Clear the canvas
-  ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
-  // Draw the dragon
-  dragon.draw();
-
-  // Draw the obstacles
-  for (var i = 0; i < obstacles.length; i++) {
-    obstacles[i].draw();
-  }
-
-  // Draw the score
-  ctx.font = "20px Arial";
-  ctx.fillText("Score: " + score, 10, 30);
-}
-
-// Main game loop
-function gameLoop() {
-  update();
-  draw();
-}
-
-// Start the game loop
-init();
-var gameInterval = setInterval(gameLoop, 16);
-
-// Handle mobile events
-function isMobile() {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-}
-
-window.addEventListener("deviceorientation", function(event) {
-  if (isMobile()) {
-    dragon.handleGyroscope(event.gamma, event.beta);
-  }
-});
-
-// Handle keyboard events
-window.addEventListener("keydown", function(event) {
-  if (!isMobile()) {
-    dragon.handleKeyboard(event.keyCode);
-  }
-});
-
-// Handle end game
-// Handle end game
-function endGame() {
-  clearInterval(gameInterval);
-  if (isMobile()) {
-    window.removeEventListener("deviceorientation");
-  } else {
-    window.removeEventListener("keydown");
-  }
-  if (confirm("Game over! Your score is: " + score + "\nDo you want to play again?")) {
-    // Restart the game
-    dragon = null;
-    obstacles = [];
-    score = 0;
-    lastObstacleTime = 0;
-    init();
-    gameInterval = setInterval(gameLoop, 16);
-  }
-}
-
-      </script>
+      // Start game loop
+      gameLoop();
+    </script>
   </body>
 </html>
