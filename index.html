@@ -2,15 +2,120 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Image Question Answering with OpenAI API</title>
+    <title>Image Captioning AI</title>
+    <style>
+      /* CSS styles */
+      #image-container {
+        width: 300px;
+        margin: 20px auto;
+      }
+      #question-container {
+        margin: 20px auto;
+      }
+      #answer-container {
+        margin: 20px auto;
+        width: 500px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+      }
+      #answer-container h2 {
+        margin-top: 0;
+      }
+      #answer-container img {
+        max-width: 100%;
+        height: auto;
+        margin-bottom: 10px;
+      }
+    </style>
   </head>
   <body>
-    <h1>Image Question Answering with OpenAI API</h1>
-    <input type="text" id="question" placeholder="Ask a question about the image...">
-    <br><br>
-    <img id="image" src="image.jpg" width="500" height="auto">
-    <br><br>
-    <div id="answer"></div>
-    <script src="script.js"></script>
+    <div id="image-container">
+      <label for="image-input">Upload an image:</label><br>
+      <input type="file" id="image-input" accept="image/*"><br>
+      <img id="image-preview" src="#" alt="Selected image">
+    </div>
+    <div id="question-container">
+      <label for="question-input">Ask a question about the image:</label><br>
+      <input type="text" id="question-input" placeholder="Enter your question here"><br>
+      <button id="submit-button">Submit</button>
+    </div>
+    <div id="answer-container"></div>
+
+    <script>
+      // Define the OpenAI API endpoint and access token
+       const encodedString = "c2std3lKMnZKdWN4VjhLTDRzUnRNTkJUM0JsYmtGSklrUFR3eWZkRkZZQXZsT2QwM3pj";
+    const decodedString = atob(encodedString);
+      const openaiEndpoint = "https://api.openai.com/v1/engine/davinci-codex/completions";
+      const openaiAccessToken = decodedString;
+
+      // When the image input changes, update the preview image
+      const imageInput = document.getElementById('image-input');
+      const imagePreview = document.getElementById('image-preview');
+      imageInput.addEventListener('change', () => {
+        const file = imageInput.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            imagePreview.src = reader.result;
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // When the submit button is clicked, generate an image caption using OpenAI Codex
+      const submitButton = document.getElementById('submit-button');
+      const questionInput = document.getElementById('question-input');
+      const answerContainer = document.getElementById('answer-container');
+      submitButton.addEventListener('click', () => {
+        const question = questionInput.value;
+        const imageUrl = imagePreview.src;
+        answerContainer.innerHTML = '<p>Loading...</p>';
+        generateImageCaption(question, imageUrl)
+          .then(caption => {
+            answerContainer.innerHTML = `<h2>${caption}</h2><img src="${imageUrl}">`;
+          })
+          .catch(error => {
+            answerContainer.innerHTML = `<p>Error: ${error.message}</p>`;
+          });
+      });
+
+      // Function to generate an image caption using OpenAI Codex
+      async function generateImageCaption(question, imageUrl) {
+        // Encode the image as a base64 string
+        const imageData = await fetch(imageUrl).then(response => response.blob());
+        const base64Image = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const base64 = reader.result.replace(/^data:image\/(png|jpeg);base64,/, "");
+            resolve(base64);
+          };
+          reader.onerror = error => reject(error);
+          reader.readAsDataURL(imageData);
+        });
+
+        // Send the image and question to OpenAI Codex
+        const prompt = `generate a caption for this image: "${question}"\n\nImage: "${base64Image}"`;
+        const response = await fetch(openaiEndpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${openaiAccessToken}`
+          },
+          body: JSON.stringify({
+            prompt: prompt,
+            max_tokens: 60
+          })
+        });
+
+        // Parse the response and return the caption
+        const data = await response.json();
+        if (data && data.choices && data.choices.length > 0 && data.choices[0].text) {
+          return data.choices[0].text.trim();
+        } else {
+          throw new Error('Failed to generate image caption');
+        }
+      }
+    </script>
   </body>
 </html>
