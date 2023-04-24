@@ -2,67 +2,15 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Face Expression Recognition</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0/dist/tf.min.js"></script>
+    <title>Image Question Answering with OpenAI API</title>
   </head>
   <body>
-    <div id="video-container"></div>
-    <div id="result-container"></div>
-
-    <script>
-      // Load face detection model
-      const faceDetector = new window.FaceDetector({fastMode: true});
-
-      // Load face expression recognition model
-      let model;
-      async function loadModel() {
-        model = await tf.loadLayersModel('https://tfhub.dev/tensorflow/tfjs-model/face-expression-recognition/1/default/1');
-      }
-      loadModel();
-
-      // Set up video stream
-      const video = document.createElement('video');
-      video.autoplay = true;
-      video.width = 640;
-      video.height = 480;
-      const videoContainer = document.getElementById('video-container');
-      videoContainer.appendChild(video);
-      navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
-        video.srcObject = stream;
-        video.play();
-      });
-
-      // Detect faces and expressions
-      const resultContainer = document.getElementById('result-container');
-      setInterval(async () => {
-        const faces = await faceDetector.detect(video);
-        if (faces.length > 0) {
-          const face = faces[0].boundingBox;
-          const canvas = document.createElement('canvas');
-          const context = canvas.getContext('2d');
-          canvas.width = video.videoWidth;
-          canvas.height = video.videoHeight;
-          context.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const image = tf.browser.fromPixels(canvas);
-          const resized = tf.image.resizeBilinear(image, [48, 48]);
-          const gray = resized.mean(2);
-          const expanded = gray.expandDims(2).expandDims();
-          const predictions = model.predict(expanded);
-          const probabilities = predictions.dataSync();
-          const emotions = ['angry', 'disgust', 'fear', 'happy', 'sad', 'surprise', 'neutral'];
-          const maxProb = Math.max(...probabilities);
-          const maxProbIndex = probabilities.indexOf(maxProb);
-          const emotion = emotions[maxProbIndex];
-          resultContainer.innerText = `Detected expression: ${emotion} (${maxProb.toFixed(4)})`;
-          image.dispose();
-          resized.dispose();
-          gray.dispose();
-          expanded.dispose();
-          predictions.dispose();
-        } else {
-          resultContainer.innerText = 'No faces detected.';
-        }
-      }, 100);
-    </script>
+    <h1>Image Question Answering with OpenAI API</h1>
+    <input type="text" id="question" placeholder="Ask a question about the image...">
+    <br><br>
+    <img id="image" src="image.jpg" width="500" height="auto">
+    <br><br>
+    <div id="answer"></div>
+    <script src="script.js"></script>
   </body>
 </html>
