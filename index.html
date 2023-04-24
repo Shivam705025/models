@@ -5,14 +5,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<style>
 		video {
-  width: 100%;
-  height: auto;
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: -1;
-}
-
+			max-width: 100%;
+			height: auto;
+		}
 	</style>
 </head>
 <body>
@@ -56,7 +51,6 @@
 			const videoPlayer = document.getElementById('video-player');
 			videoPlayer.src = videoUrl;
 			videoPlayer.play();
-			videoPlayer.style.opacity = 1; // Make the video player visible
 		}
 	}
 
@@ -66,7 +60,6 @@
 		videoPlayer.src = defaultVideoUrl;
 		videoPlayer.loop = true;
 		videoPlayer.play();
-		videoPlayer.style.opacity = 0; // Hide the video player again
 	}
 
 	// When the user clicks the "Start Listening" button, start the recognition process and pause the video.
@@ -74,8 +67,11 @@
 		recognition.start();
 		const videoPlayer = document.getElementById('video-player');
 		videoPlayer.pause();
-		videoPlayer.style.opacity = 0; // Hide the video player when listening starts
 	};
+	
+	// To ensure there is no time difference between two frames, we can set the video player's 'playsinline' attribute to true.
+	const videoPlayer = document.getElementById('video-player');
+	videoPlayer.setAttribute('playsinline', true);
 	</script>
 </body>
 </html>
