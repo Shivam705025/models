@@ -1,15 +1,73 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>3D Frog Model</title>
-    <script src="https://cdn.jsdelivr.net/npm/@google/model-viewer@2.1.0/dist/model-viewer.min.js"></script>
-  </head>
-  <body>
-    <model-viewer
-      src="frog.gltf"
-      alt="3D Frog Model"
-      camera-controls
-    ></model-viewer>
-  </body>
+<head>
+	<title>Voice-Activated Video Player</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style>
+		video {
+			max-width: 100%;
+			height: auto;
+		}
+	</style>
+</head>
+<body>
+	<h1>Voice-Activated Video Player</h1>
+	<p>Click the button and say "play video one" or "play video two" to play the corresponding video.</p>
+	<button id="start-button">Start Listening</button>
+	<video id="video-player" controls autoplay></video>
+
+	<script>
+	// First, we create a new instance of the SpeechRecognition object.
+	const recognition = new window.webkitSpeechRecognition();
+
+	// Then, we set some options for the recognition object.
+	recognition.continuous = false;
+	recognition.interimResults = false;
+	recognition.lang = 'en-US';
+
+	// Define the video URLs and their corresponding commands.
+	const videos = {
+		"pepe walk": "walk.mp4",
+		"pepe walk in savage": "savagewalk.mp4"
+    "pepe be savage": "savage.mp4"
+    "pepe do yoga": "yoga.mp4"
+    "pepe do exercise": "exercise.mp4"
+    "pepe be monkey": "monkey.mp4"
+    "pepe search my phone": "search.mp4"
+    "pepe fuck the globe": "globe.mp4"
+	};
+
+	// Define a default video URL to play if no recognized commands are given.
+	const defaultVideoUrl = "song.mp4";
+
+	// When the recognition object detects speech, it will call this function.
+	recognition.onresult = function(event) {
+		// Get the first result from the event.
+		const result = event.results[0][0].transcript;
+
+		// If the result is one of the recognized commands, play the corresponding video.
+		if (result.toLowerCase() in videos) {
+			const videoUrl = videos[result.toLowerCase()];
+			const videoPlayer = document.getElementById('video-player');
+			videoPlayer.src = videoUrl;
+			videoPlayer.play();
+		}
+	}
+
+	// When the recognition object finishes, play the default video in a loop.
+	recognition.onend = function() {
+		const videoPlayer = document.getElementById('video-player');
+		videoPlayer.src = defaultVideoUrl;
+		videoPlayer.loop = true;
+		videoPlayer.play();
+	}
+
+	// When the user clicks the "Start Listening" button, start the recognition process and pause the video.
+	document.getElementById('start-button').onclick = function() {
+		recognition.start();
+		const videoPlayer = document.getElementById('video-player');
+		videoPlayer.pause();
+	};
+	</script>
+</body>
 </html>
