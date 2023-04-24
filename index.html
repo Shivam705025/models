@@ -109,6 +109,30 @@
 			videoPlayer.src = videoUrl;
 			videoPlayer.play();
 		}
+		// If the user says "copy webpage," listen to the user for 5 seconds and repeat their words in a funny way.
+if (result.toLowerCase() === "copy") {
+	recognition.stop();
+	const start = Date.now();
+	let elapsedTime = 0;
+	const funnyVoice = new SpeechSynthesisUtterance();
+	funnyVoice.voice = speechSynthesis.getVoices()[6]; // Set the voice to a funny voice
+	funnyVoice.rate = 1.5; // Set the speaking rate to 1.5x
+	recognition.onresult = function(event) {
+		const result = event.results[0][0].transcript;
+		funnyVoice.text = result;
+		speechSynthesis.speak(funnyVoice);
+		elapsedTime = Date.now() - start;
+		if (elapsedTime > 5000) { // Stop listening after 5 seconds
+			recognition.abort();
+			videoPlayer.play();
+			return;
+		}
+	};
+	recognition.start();
+	videoPlayer.pause();
+	return;
+}
+
 	}
 
 	// When the recognition object finishes, play the default video in a loop if no other video is playing.
