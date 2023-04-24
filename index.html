@@ -1,121 +1,93 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="UTF-8">
-    <title>Image Captioning AI</title>
+<head>
+    <meta charset="utf-8">
+    <title>AI Image Inpainting</title>
     <style>
-      /* CSS styles */
-      #image-container {
-        width: 300px;
-        margin: 20px auto;
-      }
-      #question-container {
-        margin: 20px auto;
-      }
-      #answer-container {
-        margin: 20px auto;
-        width: 500px;
-        padding: 10px;
-        border: 1px solid #ccc;
-        border-radius: 5px;
-      }
-      #answer-container h2 {
-        margin-top: 0;
-      }
-      #answer-container img {
-        max-width: 100%;
-        height: auto;
-        margin-bottom: 10px;
-      }
+        img {
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+        canvas {
+            display: none;
+        }
     </style>
-  </head>
-  <body>
-    <div id="image-container">
-      <label for="image-input">Upload an image:</label><br>
-      <input type="file" id="image-input" accept="image/*"><br>
-      <img id="image-preview" src="#" alt="Selected image">
-    </div>
-    <div id="question-container">
-      <label for="question-input">Ask a question about the image:</label><br>
-      <input type="text" id="question-input" placeholder="Enter your question here"><br>
-      <button id="submit-button">Submit</button>
-    </div>
-    <div id="answer-container"></div>
-
+</head>
+<body>
+    <h1>AI Image Inpainting</h1>
+    <input type="file" id="file-input" accept="image/*">
+    <br>
+    <canvas id="canvas"></canvas>
+    <img id="image-preview">
+    <br>
+    <button id="inpaint-button" disabled>Inpaint Image</button>
+    <script src="https://cdn.jsdelivr.net/npm/@openai/openai-js-sdk@1.0.1/dist/openai-js-sdk.umd.js"></script>
     <script>
-      // Define the OpenAI API endpoint and access token
-       const encodedString = "c2std3lKMnZKdWN4VjhLTDRzUnRNTkJUM0JsYmtGSklrUFR3eWZkRkZZQXZsT2QwM3pj";
-    const decodedString = atob(encodedString);
-      const openaiEndpoint = "https://api.openai.com/v1/engines/davinci/completions";
-      const openaiAccessToken = decodedString;
+        const encodedString = "c2std3lKMnZKdWN4VjhLTDRzUnRNTkJUM0JsYmtGSklrUFR3eWZkRkZZQXZsT2QwM3pj";
+        const decodedString = atob(encodedString);
+        const openaiApiKey = decodedString;
+        const openaiEndpoint = "https://api.openai.com/v1/engines/davinci/completions";
+        const openaiModel = "text-davinci-002";
+        const fileInput = document.getElementById("file-input");
+        const canvas = document.getElementById("canvas");
+        const imagePreview = document.getElementById("image-preview");
+        const inpaintButton = document.getElementById("inpaint-button");
 
-      // When the image input changes, update the preview image
-      const imageInput = document.getElementById('image-input');
-      const imagePreview = document.getElementById('image-preview');
-      imageInput.addEventListener('change', () => {
-        const file = imageInput.files[0];
-        if (file) {
-          const reader = new FileReader();
-          reader.onload = () => {
-            imagePreview.src = reader.result;
-          };
-          reader.readAsDataURL(file);
-        }
-      });
-
-      // When the submit button is clicked, generate an image caption using OpenAI Codex
-      const submitButton = document.getElementById('submit-button');
-      const questionInput = document.getElementById('question-input');
-      const answerContainer = document.getElementById('answer-container');
-      submitButton.addEventListener('click', () => {
-        const question = questionInput.value;
-        const imageUrl = imagePreview.src;
-        answerContainer.innerHTML = '<p>Loading...</p>';
-        generateImageCaption(question, imageUrl)
-          .then(caption => {
-            answerContainer.innerHTML = `<h2>${caption}</h2><img src="${imageUrl}">`;
-          })
-          .catch(error => {
-            answerContainer.innerHTML = `<p>Error: ${error.message}</p>`;
-          });
-      });
-
-      // Function to generate an image caption using OpenAI Codex
-      async function generateImageCaption(question, imageUrl) {
-        // Encode the image as a base64 string
-        const imageData = await fetch(imageUrl).then(response => response.blob());
-        const base64Image = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => {
-            const base64 = reader.result.replace(/^data:image\/(png|jpeg);base64,/, "");
-            resolve(base64);
-          };
-          reader.onerror = error => reject(error);
-          reader.readAsDataURL(imageData);
+        fileInput.addEventListener("change", function() {
+            const file = fileInput.files[0];
+            if (file.type.match(/^image\//)) {
+                const reader = new FileReader();
+                reader.onload = function() {
+                    const img = new Image();
+                    img.onload = function() {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext("2d");
+                        ctx.drawImage(img, 0, 0);
+                        imagePreview.src = canvas.toDataURL();
+                        inpaintButton.disabled = false;
+                    };
+                    img.src = reader.result;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                alert("Please choose an image file.");
+            }
         });
 
-        // Send the image and question to OpenAI Codex
-        const prompt = `generate a caption for this image: "${question}"\n\nImage: "${base64Image}"`;
-        const response = await fetch(openaiEndpoint, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${openaiAccessToken}`
-          },
-          body: JSON.stringify({
-            prompt: prompt,
-            max_tokens: 60
-          })
+        inpaintButton.addEventListener("click", function() {
+            inpaintButton.disabled = true;
+            const ctx = canvas.getContext("2d");
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const base64Data = canvas.toDataURL().split(",")[1];
+            const openaiClient = new OpenAI({
+                apiKey: openaiApiKey,
+            });
+            openaiClient.completions.create({
+                engine: "davinci",
+                prompt: `Please complete the image: ${base64Data}`,
+                maxTokens: 512,
+                n: 1,
+                stop: ["\n"],
+                temperature: 0.5,
+                presencePenalty: 0,
+                frequencyPenalty: 0,
+            })
+            .then(response => {
+                const result = response.choices[0].text.trim();
+                const img = new Image();
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0);
+                    imagePreview.src = canvas.toDataURL();
+                    inpaintButton.disabled = false;
+                };
+                img.src = result;
+            })
+            .catch(error => {
+                console.error(error);
+                inpaintButton.disabled = false;
+            });
         });
-
-        // Parse the response and return the caption
-        const data = await response.json();
-        if (data && data.choices && data.choices.length > 0 && data.choices[0].text) {
-          return data.choices[0].text.trim();
-        } else {
-          throw new Error('Failed to generate image caption');
-        }
-      }
     </script>
-  </body>
+</body>
 </html>
