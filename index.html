@@ -53,12 +53,8 @@
                         Authorization: `Bearer ${mythxApiKey}`,
                     },
                     body: JSON.stringify({
-                        contractName: 'MyContract',
-                        sources: {
-                            'MyContract.sol': { content: solidityCode },
-                        },
+                        sources: { 'MyContract.sol': { content: solidityCode } },
                         analysisMode: 'quick',
-                        timeout: 300,
                     }),
                 };
 
