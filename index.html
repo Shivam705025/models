@@ -1,134 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Voice-Activated Video Player</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<style>
-		video {
-			max-width: 100%;
-			height: auto;
-		}
-		.my-button {
-  background-color: #4CAF50; /* Set the background color */
-  border: none; /* Remove the border */
-  color: white; /* Set the text color */
-  padding: 10px 20px; /* Set the padding */
-  text-align: center; /* Center the text */
-  text-decoration: none; /* Remove underline from text */
-  display: inline-block; /* Make the button an inline element */
-  font-size: 16px; /* Set the font size */
-  border-radius: 5px; /* Add rounded corners */
-  transition: background-color 0.3s ease; /* Add a transition effect */
-}
-
-/* Hover effect */
-.my-button:hover {
-  background-color: #3e8e41;
-}
-.my-heading {
-  font-family: 'Montserrat', sans-serif; /* Set the font family */
-  font-size: 48px; /* Set the font size */
-  font-weight: bold; /* Set the font weight to bold */
-  color: #006400; /* Set the text color */
-  text-align: center; /* Center the text */
-  text-transform: uppercase; /* Convert text to uppercase */
-  letter-spacing: 2px; /* Add letter spacing */
-  margin-top: 50px; /* Add top margin */
-}
-		.my-paragraph {
-  color: #006400; /* Set the dark green color */
-  font-size: 16px; /* Set the font size */
-  line-height: 1.5; /* Set the line height */
-  margin: 20px 0; /* Add top and bottom margin */
-}
-
-	</style>
+    <title>Newly Created Tokens on Ethereum</title>
 </head>
 <body>
-	<div align="center">
-	<h1 class="my-heading">Talk to Pepedash</h1>
-	
-	</div>
-	<div align="center">
-	
-	<video id="video-player" autoplay></video>
-	<br>
-	<button class="my-button" id="start-button">Give Command</button>
-	<br>
-	<p class="my-paragraph">Click the button and say </p>
-		<p class="my-paragraph">walk</p>
-		<p class="my-paragraph">savage</p>
-		<p class="my-paragraph">glasses</p>
-		<p class="my-paragraph">yoga</p>
-		<p class="my-paragraph">exercise</p>
-		<p class="my-paragraph">monkey</p>
-		<p class="my-paragraph">phone</p>
-		<p class="my-paragraph">globe</p>
-	</div>
-	<script>
-	// First, we create a new instance of the SpeechRecognition object.
-	const recognition = new window.webkitSpeechRecognition();
+    <h1>Newly Created Tokens on Ethereum</h1>
+    <div id="tokenList"></div>
 
-	// Then, we set some options for the recognition object.
-	recognition.continuous = false;
-	recognition.interimResults = false;
-	recognition.lang = 'en-US';
+    <script>
+        // Replace with your Etherscan API key
+        const etherscanApiKey = 'AFFD2SXUNV3RY968V4442KMBP4928IBMJ7';
 
-	// Define the video URLs and their corresponding commands.
-	const videos = {
-		"walk": "walk.mp4",
-		"savage": "savagewalk.mp4",
-		"glasses": "savage.mp4",
-		"yoga": "yoga.mp4",
-		"exercise": "exercise.mp4",
-		"monkey": "monkey.mp4",
-		"phone": "search.mp4",
-		"globe": "globe.mp4"
-	};
+        async function fetchNewTokens() {
+            try {
+                const response = await fetch(`https://api.etherscan.io/api?module=account&action=tokentx&address=0x0000000000000000000000000000000000000000&startblock=0&endblock=999999999&sort=desc&apikey=${etherscanApiKey}`);
+                const data = await response.json();
 
-	// Define a default video URL to play if no recognized commands are given.
-	const defaultVideoUrl = "song.mp4";
-	
-	
+                if (data.status === '1') {
+                    const tokenList = document.getElementById('tokenList');
 
-	// Play the default video when the page loads.
-	const videoPlayer = document.getElementById('video-player');
-	videoPlayer.src = defaultVideoUrl;
-	videoPlayer.loop = true;
-	videoPlayer.play();
-	
+                    if (data.result && data.result.length > 0) {
+                        data.result.forEach(tokenTx => {
+                            const tokenInfo = `
+                                <div>
+                                    <strong>Token Name:</strong> ${tokenTx.tokenName}<br>
+                                    <strong>Token Symbol:</strong> ${tokenTx.tokenSymbol}<br>
+                                    <strong>Token Contract Address:</strong> ${tokenTx.contractAddress}<br>
+                                    <strong>Transaction Hash:</strong> ${tokenTx.hash}<br><br>
+                                </div>
+                            `;
+                            tokenList.insertAdjacentHTML('beforeend', tokenInfo);
+                        });
+                    } else {
+                        tokenList.innerHTML = '<p>No newly created tokens found.</p>';
+                    }
+                } else {
+                    console.error('Error fetching token data:', data.message);
+                }
+            } catch (error) {
+                console.error('Error fetching token data:', error);
+            }
+        }
 
-	// When the recognition object detects speech, it will call this function.
-	recognition.onresult = function(event) {
-		// Get the first result from the event.
-		const result = event.results[0][0].transcript;
-
-		// If the result is one of the recognized commands, play the corresponding video.
-		if (result.toLowerCase() in videos) {
-			const videoUrl = videos[result.toLowerCase()];
-			videoPlayer.src = videoUrl;
-			videoPlayer.play();
-		}
-	}
-
-	// When the recognition object finishes, play the default video in a loop if no other video is playing.
-	recognition.onend = function() {
-		if (videoPlayer.ended && !videoPlayer.paused) {
-			videoPlayer.src = defaultVideoUrl;
-			videoPlayer.loop = true;
-			videoPlayer.play();
-		}
-	}
-
-	// When the user clicks the "Start Listening" button, stop earlier listening and start a new recognition process, and pause the video.
-	document.getElementById('start-button').onclick = function() {
-		recognition.abort();
-		recognition.start();
-		videoPlayer.pause();
-	};
-
-	// To ensure there is no time difference between two frames, we can set the video player's 'playsinline' attribute to true.
-	videoPlayer.setAttribute('playsinline', true);
-	</script>
+        fetchNewTokens();
+    </script>
 </body>
 </html>
