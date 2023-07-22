@@ -11,6 +11,23 @@
         // Replace with your Etherscan API key
         const etherscanApiKey = 'AFFD2SXUNV3RY968V4442KMBP4928IBMJ7';
 
+        async function fetchTokenSourceCode(contractAddress) {
+            try {
+                const response = await fetch(`https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${contractAddress}&apikey=${etherscanApiKey}`);
+                const data = await response.json();
+
+                if (data.status === '1' && data.result.length > 0) {
+                    return data.result[0].SourceCode;
+                } else {
+                    console.error('Error fetching contract source code:', data.message);
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error fetching contract source code:', error);
+                return null;
+            }
+        }
+
         async function fetchNewTokens() {
             try {
                 const response = await fetch(`https://api.etherscan.io/api?module=account&action=tokentx&address=0x0000000000000000000000000000000000000000&startblock=0&endblock=999999999&sort=desc&apikey=${etherscanApiKey}`);
@@ -20,17 +37,19 @@
                     const tokenList = document.getElementById('tokenList');
 
                     if (data.result && data.result.length > 0) {
-                        data.result.forEach(tokenTx => {
+                        for (const tokenTx of data.result) {
                             const tokenInfo = `
                                 <div>
                                     <strong>Token Name:</strong> ${tokenTx.tokenName}<br>
                                     <strong>Token Symbol:</strong> ${tokenTx.tokenSymbol}<br>
                                     <strong>Token Contract Address:</strong> ${tokenTx.contractAddress}<br>
-                                    <strong>Transaction Hash:</strong> ${tokenTx.hash}<br><br>
+                                    <strong>Transaction Hash:</strong> ${tokenTx.hash}<br>
+                                    <strong>Contract Source Code:</strong><br>
+                                    <textarea rows="10" cols="80">${await fetchTokenSourceCode(tokenTx.contractAddress)}</textarea><br><br>
                                 </div>
                             `;
                             tokenList.insertAdjacentHTML('beforeend', tokenInfo);
-                        });
+                        }
                     } else {
                         tokenList.innerHTML = '<p>No newly created tokens found.</p>';
                     }
