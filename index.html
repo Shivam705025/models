@@ -8,8 +8,9 @@
     <div id="tokenList"></div>
 
     <script>
-        // Replace with your Etherscan API key
+        // Replace with your Etherscan API key and MythX API key
         const etherscanApiKey = 'AFFD2SXUNV3RY968V4442KMBP4928IBMJ7';
+        const mythxApiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNWVlMzgzZS01NWUxLTQ1ZGEtYjExZC0wNTYwMDkzNmY3YjAiLCJpYXQiOjE2OTAwNTk0MzEuOTg1LCJpc3MiOiJNeXRoWCBBdXRoIFNlcnZpY2UiLCJleHAiOjIwMDU2MzU0MzEuOTcsInVzZXJJZCI6IjY0YmM0MjhlODI4OGFiNzdhOGEwNmI2NyJ9.VKLkGAEJxa3eLR_S_EIBTBvoZyiU2G9M17S1Yq5CPH4';
 
         async function fetchTokenSourceCode(contractAddress) {
             try {
@@ -17,13 +18,55 @@
                 const data = await response.json();
 
                 if (data.status === '1' && data.result.length > 0) {
-                    return data.result[0].SourceCode;
+                    const solidityCode = data.result[0].SourceCode;
+                    const analysisResult = await analyzeSolidityCode(solidityCode);
+
+                    // Display analysis results below the solidity code
+                    const tokenList = document.getElementById('tokenList');
+                    const tokenInfo = `
+                        <div>
+                            <strong>Token Name:</strong> ${data.result[0].tokenName}<br>
+                            <strong>Token Symbol:</strong> ${data.result[0].tokenSymbol}<br>
+                            <strong>Token Contract Address:</strong> ${contractAddress}<br>
+                            <strong>Transaction Hash:</strong> ${data.result[0].hash}<br>
+                            <strong>Contract Source Code:</strong><br>
+                            <textarea rows="10" cols="80">${solidityCode}</textarea><br>
+                            <strong>Analysis Results:</strong><br>
+                            <pre>${JSON.stringify(analysisResult, null, 2)}</pre><br><br>
+                        </div>
+                    `;
+                    tokenList.insertAdjacentHTML('beforeend', tokenInfo);
                 } else {
                     console.error('Error fetching contract source code:', data.message);
-                    return null;
                 }
             } catch (error) {
                 console.error('Error fetching contract source code:', error);
+            }
+        }
+
+        async function analyzeSolidityCode(solidityCode) {
+            try {
+                const requestOptions = {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${mythxApiKey}`,
+                    },
+                    body: JSON.stringify({
+                        contractName: 'MyContract',
+                        sources: {
+                            'MyContract.sol': { content: solidityCode },
+                        },
+                        analysisMode: 'quick',
+                        timeout: 300,
+                    }),
+                };
+
+                const response = await fetch('https://api.mythx.io/v1/analyses', requestOptions);
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error analyzing solidity code:', error);
                 return null;
             }
         }
@@ -38,17 +81,7 @@
 
                     if (data.result && data.result.length > 0) {
                         for (const tokenTx of data.result) {
-                            const tokenInfo = `
-                                <div>
-                                    <strong>Token Name:</strong> ${tokenTx.tokenName}<br>
-                                    <strong>Token Symbol:</strong> ${tokenTx.tokenSymbol}<br>
-                                    <strong>Token Contract Address:</strong> ${tokenTx.contractAddress}<br>
-                                    <strong>Transaction Hash:</strong> ${tokenTx.hash}<br>
-                                    <strong>Contract Source Code:</strong><br>
-                                    <textarea rows="10" cols="80">${await fetchTokenSourceCode(tokenTx.contractAddress)}</textarea><br><br>
-                                </div>
-                            `;
-                            tokenList.insertAdjacentHTML('beforeend', tokenInfo);
+                            await fetchTokenSourceCode(tokenTx.contractAddress);
                         }
                     } else {
                         tokenList.innerHTML = '<p>No newly created tokens found.</p>';
