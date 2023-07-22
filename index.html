@@ -10,6 +10,8 @@
     <script>
         // Replace with your Etherscan API key
         const etherscanApiKey = 'AFFD2SXUNV3RY968V4442KMBP4928IBMJ7';
+        // Replace with your MythX API key
+        const mythxApiKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNWVlMzgzZS01NWUxLTQ1ZGEtYjExZC0wNTYwMDkzNmY3YjAiLCJpYXQiOjE2OTAwNTk0MzEuOTg1LCJpc3MiOiJNeXRoWCBBdXRoIFNlcnZpY2UiLCJleHAiOjIwMDU2MzU0MzEuOTcsInVzZXJJZCI6IjY0YmM0MjhlODI4OGFiNzdhOGEwNmI2NyJ9.VKLkGAEJxa3eLR_S_EIBTBvoZyiU2G9M17S1Yq5CPH4';
 
         async function fetchTokenSourceCode(contractAddress) {
             try {
@@ -33,13 +35,17 @@
                 const mythxApiUrl = 'https://api.mythx.io/v1/analyses';
 
                 const analysisRequest = {
-                    data: code
+                    sources: {
+                        'contract.sol': {
+                            content: code
+                        }
+                    }
                 };
 
                 const response = await fetch(mythxApiUrl, {
                     method: 'POST',
                     headers: {
-                        Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIyNWVlMzgzZS01NWUxLTQ1ZGEtYjExZC0wNTYwMDkzNmY3YjAiLCJpYXQiOjE2OTAwNTk0MzEuOTg1LCJpc3MiOiJNeXRoWCBBdXRoIFNlcnZpY2UiLCJleHAiOjIwMDU2MzU0MzEuOTcsInVzZXJJZCI6IjY0YmM0MjhlODI4OGFiNzdhOGEwNmI2NyJ9.VKLkGAEJxa3eLR_S_EIBTBvoZyiU2G9M17S1Yq5CPH4`,
+                        Authorization: `Bearer ${mythxApiKey}`,
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(analysisRequest)
