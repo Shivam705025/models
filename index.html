@@ -84,6 +84,8 @@
                                     <strong>Transaction Hash:</strong> ${tokenTx.hash}<br>
                                     <strong>Contract ABI:</strong><br>
                                     <textarea rows="10" cols="80">${await fetchTokenDetails(contractAddress)}</textarea><br>
+                                    <textarea rows="10" cols="80">${await fetchTokenSourceCode(tokenTx.contractAddress)}</textarea><br><br>
+
                                     <strong>Balance:</strong> ${await fetchTokenBalance(contractAddress)} ETH<br>
                                     <strong>Last Five Transactions:</strong><br>
                                     <ul>
