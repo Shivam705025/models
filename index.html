@@ -78,11 +78,16 @@
                                     <strong>Transaction Hash:</strong> ${tokenTx.hash}<br>
                                     <strong>Contract Source Code:</strong><br>
                                     <textarea rows="10" cols="80">${await fetchTokenSourceCode(contractAddress)}</textarea><br>
-                                    <button onclick="analyzeContract('${contractAddress}')">Analyze Contract</button><br>
                                     <div id="analysisResult_${contractAddress}"></div>
                                 </div>
                             `;
                             tokenList.insertAdjacentHTML('beforeend', tokenInfo);
+
+                            const analysisData = await fetchSolidityScanAnalysis(contractAddress);
+        if (analysisData) {
+            const analysisResultDiv = document.getElementById(`analysisResult_${contractAddress}`);
+            analysisResultDiv.innerHTML = `<pre>${JSON.stringify(analysisData, null, 2)}</pre>`;
+        }
                         }
                     } else {
                         tokenList.innerHTML = '<p>No newly created tokens found.</p>';
@@ -95,16 +100,32 @@
             }
         }
 
-        async function analyzeContract(contractAddress) {
-            const sourceCode = await fetchTokenSourceCode(contractAddress);
-            if (sourceCode) {
-                const analysisData = await fetchMythXAnalysis(sourceCode);
-                if (analysisData) {
-                    const analysisResultDiv = document.getElementById(`analysisResult_${contractAddress}`);
-                    analysisResultDiv.innerHTML = `<pre>${JSON.stringify(analysisData, null, 2)}</pre>`;
-                }
-            }
-        }
+        async function fetchSolidityScanAnalysis(contractAddress) {
+    try {
+        const solidityScanApiUrl = 'https://solidityscan.com/app/api-get-contract-status';
+
+        const analysisRequest = {
+            contract_address: contractAddress,
+            contract_platform: 'etherscan',
+            contract_chain: 'mainnet'
+        };
+
+        const response = await fetch(solidityScanApiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(analysisRequest)
+        });
+
+        const analysisData = await response.json();
+        return analysisData;
+    } catch (error) {
+        console.error('Error analyzing contract:', error);
+        return null;
+    }
+}
+
 
         fetchNewTokens();
     </script>
